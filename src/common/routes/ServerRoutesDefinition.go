@@ -82,12 +82,13 @@ func (r *routesDefinition) addRoutes(serverInstance *gin.Engine) {
 
 	// Adapters & Services
 	storageAdapter := progressAdapters.NewStorageServiceAdapter()
+	aiAdapter := progressAdapters.NewAIServiceAdapter()
 
 	// Use Cases
-	createMetricsUC := progressUseCases.NewCreateBodyMetricsUseCase(metricsRepo)
+	createMetricsUC := progressUseCases.NewCreateBodyMetricsUseCase(metricsRepo, aiAdapter)
 	getMetricsUC := progressUseCases.NewGetUserMetricsUseCase(metricsRepo)
 	getWeightChartUC := progressUseCases.NewGetWeightChartUseCase(metricsRepo)
-	uploadPhotoUC := progressUseCases.NewUploadProgressPhotoUseCase(photosRepo, storageAdapter)
+	uploadPhotoUC := progressUseCases.NewUploadProgressPhotoUseCase(photosRepo, storageAdapter, aiAdapter)
 	getPhotosUC := progressUseCases.NewGetUserPhotosUseCase(photosRepo)
 	createNoteUC := progressUseCases.NewCreateCoachNoteUseCase(notesRepo)
 	getNotesUC := progressUseCases.NewGetUserNotesUseCase(notesRepo)

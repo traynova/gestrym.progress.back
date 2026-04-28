@@ -6,18 +6,21 @@ import (
 	"gestrym-progress/src/progress/application/dtos"
 	"gestrym-progress/src/progress/domain/ports"
 	"gestrym-progress/src/progress/domain/repositories"
+	"log"
 	"mime/multipart"
 )
 
 type UploadProgressPhotoUseCase struct {
 	repo           repositories.ProgressPhotoRepository
 	storageService ports.StorageService
+	aiService      ports.AIService
 }
 
-func NewUploadProgressPhotoUseCase(repo repositories.ProgressPhotoRepository, storageService ports.StorageService) *UploadProgressPhotoUseCase {
+func NewUploadProgressPhotoUseCase(repo repositories.ProgressPhotoRepository, storageService ports.StorageService, aiService ports.AIService) *UploadProgressPhotoUseCase {
 	return &UploadProgressPhotoUseCase{
 		repo:           repo,
 		storageService: storageService,
+		aiService:      aiService,
 	}
 }
 
@@ -34,5 +37,23 @@ func (uc *UploadProgressPhotoUseCase) Execute(ctx context.Context, req dtos.Uplo
 		Date:     req.Date,
 	}
 
-	return uc.repo.Create(ctx, photo)
+	err = uc.repo.Create(ctx, photo)
+	if err != nil {
+		return err
+	}
+
+	// Trigger AI Adaptation (Async and ignore failure)
+	go func() {
+		bgCtx := context.Background()
+		errTr := uc.aiService.AdaptTraining(bgCtx, photo.UserID)
+		if errTr != nil {
+			log.Printf("Error triggering AI training adaptation from photo: %v", errTr)
+		}
+		errNu := uc.aiService.AdaptNutrition(bgCtx, photo.UserID)
+		if errNu != nil {
+			log.Printf("Error triggering AI nutrition adaptation from photo: %v", errNu)
+		}
+	}()
+
+	return nil
 }

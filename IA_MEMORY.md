@@ -70,3 +70,20 @@ Se implementó un adaptador que realiza peticiones POST al microservicio de stor
 - `POST /workout-progress`: Permite marcar una rutina como completada, registrando la fecha, duración y notas adicionales.
 - `GET /workout-progress/user/:id`: Obtiene el historial de rutinas completadas por el usuario.
 - **Integración**: Este endpoint utiliza el ID de la rutina proveniente del `training-service` para vincular el progreso.
+
+## 🤖 Integración con AI Service (Adaptación Inteligente)
+Se ha implementado una integración reactiva con el microservicio de IA para permitir que los planes de entrenamiento y nutrición se adapten automáticamente al progreso del usuario.
+
+### ⚙️ Implementación Técnica
+- **Port/Interface**: `AIService` en la capa de dominio define los métodos `AdaptTraining` y `AdaptNutrition`.
+- **Adaptador**: `AIServiceAdapter` implementa la comunicación HTTP con el microservicio de IA.
+- **Inyección**: El servicio se inyecta en los casos de uso de métricas corporales y fotos de progreso.
+
+### 🧠 Lógica de Activación (Triggers)
+1.  **Creación de Métricas**: Al registrar peso o medidas, el sistema evalúa si el cambio es significativo (umbral de **> 0.5kg**). Si se cumple, se solicita una re-evaluación de los planes.
+2.  **Fotos de Progreso**: Subir una nueva foto siempre dispara una solicitud de adaptación, ya que puede representar cambios visuales no capturados por las básculas.
+
+### 🚀 Optimización y Resiliencia
+- **Ejecución Asíncrona**: Las llamadas a la IA se ejecutan en goroutines separadas. El usuario recibe su confirmación de guardado inmediatamente sin esperar la respuesta de la IA.
+- **Tolerancia a Fallos**: Si el microservicio de IA no está disponible o falla, el error se registra en logs pero el flujo principal del `progress-service` continúa exitosamente.
+- **Debounce Natural**: Al validar contra el registro anterior, evitamos llamadas redundantes si los cambios son mínimos.
