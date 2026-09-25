@@ -1,0 +1,16 @@
+networks:
+  gestrym-network:
+    external: true
+
+services:
+  gestrym-progress:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${PROGRESS_IMAGE:-jhonnier/back-progress:${VERSION:-1.0.1}}
+    container_name: gestrym-progress
+    restart: always
+    env_file:
+      - stack.env
+    networks:
+      - gestrym-network
